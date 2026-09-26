@@ -32,6 +32,7 @@
     "predev": "tsx scripts/generate-demo.ts --if-missing",
     "dev": "next dev",
     "build": "next build",
+    "build:demo": "tsx scripts/generate-demo.ts --if-missing --out public/static-projects && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

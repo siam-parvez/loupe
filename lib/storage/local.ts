@@ -3,7 +3,14 @@ import 'server-only';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-import { IMAGES_DIR, ORIGINAL_FILE, PROJECT_FILE, imageKey } from '@/lib/projects/layout';
+import {
+  IMAGES_DIR,
+  ORIGINAL_FILE,
+  PROJECT_FILE,
+  THUMBNAIL_FILE,
+  TILES_DIR,
+  imageKey,
+} from '@/lib/projects/layout';
 import { isValidId } from '@/lib/projects/validation';
 
 import type { OriginalSource, StorageDriver } from './types';
@@ -13,8 +20,21 @@ function isNotFound(error: unknown): boolean {
   return code === 'ENOENT' || code === 'ENOTDIR';
 }
 
-export function createLocalStorage(rootDir: string): StorageDriver {
+interface LocalStorageOptions {
+  /**
+   * When the root lives inside `public/`, the URL prefix it is served at (e.g. '/static-projects').
+   * Tiles, thumbnails and originals are then linked as static files so a CDN serves them directly,
+   * while metadata is still read from disk. Used for the hosted demo.
+   */
+  publicUrlPrefix?: string;
+}
+
+export function createLocalStorage(
+  rootDir: string,
+  { publicUrlPrefix }: LocalStorageOptions = {},
+): StorageDriver {
   const root = path.resolve(rootDir);
+  const staticUrl = (key: string) => `${publicUrlPrefix}/${key}`;
 
   /** Maps a storage key to an absolute path and refuses anything outside the root. */
   function resolveKey(key: string): string {
@@ -63,12 +83,19 @@ export function createLocalStorage(rootDir: string): StorageDriver {
     },
 
     tileBaseUrl: (projectId, imageId, version) =>
-      `/api/projects/${projectId}/${IMAGES_DIR}/${imageId}/tiles/${version}/`,
+      publicUrlPrefix
+        ? staticUrl(imageKey(projectId, imageId, `${TILES_DIR}/`))
+        : `/api/projects/${projectId}/${IMAGES_DIR}/${imageId}/tiles/${version}/`,
 
     thumbnailUrl: (projectId, imageId, version) =>
-      `/api/projects/${projectId}/${IMAGES_DIR}/${imageId}/thumbnail?v=${version}`,
+      publicUrlPrefix
+        ? `${staticUrl(imageKey(projectId, imageId, THUMBNAIL_FILE))}?v=${version}`
+        : `/api/projects/${projectId}/${IMAGES_DIR}/${imageId}/thumbnail?v=${version}`,
 
     async resolveOriginal(projectId, imageId): Promise<OriginalSource | null> {
+      if (publicUrlPrefix) {
+        return { kind: 'redirect', url: staticUrl(imageKey(projectId, imageId, ORIGINAL_FILE)) };
+      }
       const file = resolveKey(imageKey(projectId, imageId, ORIGINAL_FILE));
       try {
         const stat = await fs.stat(file);

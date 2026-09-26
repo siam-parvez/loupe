@@ -1,11 +1,16 @@
 import 'server-only';
 
+import path from 'node:path';
+
 import { createLocalStorage } from './local';
 import { createRemoteStorage } from './remote';
 import { resolveLocalStorageDir } from './root';
 import { StorageConfigError, type StorageDriver } from './types';
 
 let cached: StorageDriver | undefined;
+
+/** Where the `static` driver keeps projects: inside `public/`, served by the CDN at this prefix. */
+export const STATIC_PROJECTS_PREFIX = '/static-projects';
 
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, '');
@@ -15,6 +20,16 @@ function createStorageFromEnv(): StorageDriver {
   const driver = (process.env.VIEWER_STORAGE_DRIVER ?? 'local').trim().toLowerCase();
 
   if (driver === 'local') return createLocalStorage(resolveLocalStorageDir());
+
+  // Hosted demo: projects generated into public/ at build time, assets served straight from the CDN.
+  if (driver === 'static') {
+    const root = path.join(
+      /* turbopackIgnore: true */ process.cwd(),
+      'public',
+      STATIC_PROJECTS_PREFIX,
+    );
+    return createLocalStorage(root, { publicUrlPrefix: STATIC_PROJECTS_PREFIX });
+  }
 
   if (driver === 'remote') {
     const assetBaseUrl = process.env.VIEWER_ASSET_BASE_URL?.trim();
@@ -30,7 +45,9 @@ function createStorageFromEnv(): StorageDriver {
     });
   }
 
-  throw new StorageConfigError(`Unknown VIEWER_STORAGE_DRIVER "${driver}" (use local or remote)`);
+  throw new StorageConfigError(
+    `Unknown VIEWER_STORAGE_DRIVER "${driver}" (use local, static or remote)`,
+  );
 }
 
 /** The configured storage driver (singleton per server process). */

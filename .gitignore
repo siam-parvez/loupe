@@ -10,6 +10,7 @@ next-env.d.ts
 # generated artwork (originals + tiles) — never commit client files
 /projects
 /.cache
+/public/static-projects
 
 # env
 .env*

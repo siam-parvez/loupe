@@ -3,6 +3,7 @@
  *
  *   pnpm viewer:demo                              (re)generate the demo project
  *   tsx scripts/generate-demo.ts --if-missing     (used by `predev`; no-op when it exists)
+ *   tsx scripts/generate-demo.ts --out public/static-projects   (hosted demo build)
  */
 import { existsSync, promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -74,7 +75,9 @@ async function writeDemoPng(image: DemoImage): Promise<string> {
 }
 
 async function main(): Promise<void> {
-  const projectsRoot = resolveLocalStorageDir();
+  const outIndex = process.argv.indexOf('--out');
+  const outDir = outIndex === -1 ? undefined : process.argv[outIndex + 1];
+  const projectsRoot = outDir ? path.resolve(outDir) : resolveLocalStorageDir();
   const ifMissing = process.argv.includes('--if-missing');
   if (ifMissing && existsSync(path.join(projectsRoot, PROJECT_ID, PROJECT_FILE))) return;
 
@@ -106,6 +109,7 @@ async function main(): Promise<void> {
 
 main().catch((error: unknown) => {
   console.error('\n✖ Could not create the demo project:', error);
-  // Never block `pnpm dev` because of the demo.
-  process.exitCode = process.argv.includes('--if-missing') ? 0 : 1;
+  // Never block `pnpm dev` because of the demo — but do fail a hosted-demo build (--out).
+  const isDevConvenience = process.argv.includes('--if-missing') && !process.argv.includes('--out');
+  process.exitCode = isDevConvenience ? 0 : 1;
 });
