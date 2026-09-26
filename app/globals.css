@@ -1,0 +1,64 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, 'SFMono-Regular', monospace;
+
+  /* Siam Parvez brand (siamparvez.com dark theme): pure black, white ink, lemon accent. */
+  --color-stage: oklch(0% 0 0);
+  --color-panel: oklch(9.8% 0 0);
+  --color-line: oklch(0.24 0 0);
+  --color-ink: oklch(100% 0 0);
+  --color-muted: oklch(63.9% 0 0);
+  --color-brand: oklch(0.93071 0.22853 123.09); /* #CCFF00 */
+  --color-brand-ink: oklch(0% 0 0);
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--color-stage);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Keep the page from rubber-banding while the client pinches/pans the artwork on touch devices. */
+body {
+  overscroll-behavior: none;
+}
+
+/* OpenSeadragon injects its own elements; keep them borderless and calm. */
+.openseadragon-container:focus,
+.openseadragon-canvas:focus {
+  outline: none;
+}
+
+/* The minimap is only useful with room to spare. */
+@media (max-width: 899px) {
+  .openseadragon-container .navigator {
+    display: none !important;
+  }
+}
+
+@keyframes hint-fade {
+  0%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-hint {
+  animation: hint-fade 6s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
