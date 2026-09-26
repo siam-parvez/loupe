@@ -139,6 +139,20 @@ ngrok http 3000
 
 Send the client `https://<id>.ngrok-free.app/viewer/<project>`. All URLs in the app are relative, so it works on any host. `next.config.ts` allows `*.ngrok-free.app` / `*.ngrok-free.dev` / `*.ngrok.app` in case you tunnel `pnpm dev`. The free ngrok plan shows a one-time warning page and limits bandwidth; a 200 MB download counts against that limit. Nothing in the app depends on ngrok.
 
+## Hosted demo (Vercel)
+
+The public demo uses the `static` storage driver. The demo artworks are generated during the build into `public/static-projects/`, so the CDN serves every tile, thumbnail and original directly, and no images live in git.
+
+To deploy your own, import the repo in Vercel and set:
+
+| Setting                 | Value             |
+| ----------------------- | ----------------- |
+| Build command           | `pnpm build:demo` |
+| `VIEWER_STORAGE_DRIVER` | `static`          |
+| `VIEWER_HOME_REDIRECT`  | `/viewer/demo`    |
+
+For real client work, don't put originals in `public/`. Use the `local` driver on a server, or R2 (see below).
+
 ## Branding
 
 - Name, site and email: `lib/brand.ts`
